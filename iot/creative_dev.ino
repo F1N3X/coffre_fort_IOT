@@ -66,16 +66,16 @@ void loop() {
   server.handleClient(); // <-- Appels HTTP gérés ici
   Serial.print(".");
   delay(15);
-  // for (int i = 0; i < 3; i++) {
-  //   bool currentState = digitalRead(buttonPins[i]) == LOW;
+  for (int i = 0; i < 3; i++) {
+    bool currentState = digitalRead(buttonPins[i]) == LOW;
 
-  //   if (currentState && !lastButtonStates[i]) {
-  //     // Appui détecté (front montant)
-  //     handleButtonPress(i + 1); // bouton numéroté de 1 à 3
-  //   }
+    if (currentState && !lastButtonStates[i]) {
+      // Appui détecté (front montant)
+      handleButtonPress(i + 1); // bouton numéroté de 1 à 3
+    }
 
-  //   lastButtonStates[i] = currentState;
-  // }
+    lastButtonStates[i] = currentState;
+  }
   sensors_event_t a, g, temp;
  	mpu.getEvent(&a, &g, &temp);
   if(g.gyro.x > 0.3 || g.gyro.y > 0.3 || g.gyro.z > 0.3 || g.gyro.x < -0.3 || g.gyro.y < -0.3 || g.gyro.z < -0.3 ){
@@ -120,10 +120,7 @@ void handleButtonPress(int ButtonPressed) {
       onCodeSuccess();
     }
   } else {
-    
-    ButtonStep = 0;
-    pixels.setPixelColor(0, pixels.Color(255, 10, 10));
-    pixels.show();
+    onCodeError()
   }
 }
 
@@ -136,7 +133,15 @@ void onCodeSuccess() {
   delay(800);
 
 }
-
+void onCodeError() {
+    ButtonStep = 0;
+    pixels.setPixelColor(0, pixels.Color(255, 10, 10));
+    pixels.show();
+    pixels.setPixelColor(0, pixels.Color(255, 10, 10));
+    pixels.show();
+    myservo.write(0);
+    delay(800);
+}
 void handleCode() {
   if (server.hasArg("code")) {
     String userCode = server.arg("code");
@@ -145,10 +150,7 @@ void handleCode() {
       onCodeSuccess();
     } else {
       server.send(403, "text/plain", "Code incorrect !");
-      pixels.setPixelColor(0, pixels.Color(255, 10, 10));
-      pixels.show();
-      myservo.write(0);
-      delay(800);
+      onCodeError()
     }
   } else {
     server.send(400, "text/plain", "Paramètre 'code' manquant.");
